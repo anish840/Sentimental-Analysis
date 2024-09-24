@@ -36,14 +36,14 @@ Clone this repository:
 
 bash
 Copy code
-git clone https://github.com/anish840/sentiment-analysis-flask.git
+git clone https://github.com/anish840/Sentimental-Analysis/tree/main
 cd sentiment-analysis-flask
 Run the Flask application:
 
 bash
 Copy code
 python app.py
-Open your browser and navigate to http://127.0.0.1:5000/ to access the app.
+Open your browser and navigate to http://127.0.0.1:5000/ to access the app. # you will get your own local domain.
 
 Usage
 Go to the home page.
