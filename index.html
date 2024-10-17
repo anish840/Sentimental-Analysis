@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentiment Analysis</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background: url('static/Background.webp') no-repeat center center fixed;
+            background-size: cover;
+            color: #fff;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            background-color: rgba(37, 35, 35, 0);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(41, 39, 39, 0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            position: relative;
+        }
+        .header img {
+            height: 70px;
+            margin-bottom: 20px;
+            animation: rotate 5s infinite linear;
+        }
+        @keyframes rotate {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2.5rem;
+            display: inline-block;
+            background: linear-gradient(to right, #ba8deb, #6a97e3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            color: transparent;
+        }
+        .form-group button {
+            background-color: #6a97e3;
+            border: none;
+            color: #201e1e;
+            font-size: 1rem;
+            padding: 10px;
+            border-radius: 5px;
+            width: 100%;
+        }
+        .form-group button:hover {
+            background-color: #5b85cb;
+        }
+        .result {
+            display: none;
+            margin-top: 20px;
+        }
+        .result .label {
+            font-weight: bold;
+        }
+        .chart-container {
+            margin-top: 20px;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+        canvas {
+            max-width: 100%;
+        }
+        .footer {
+            margin-top: 50px;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #fff;
+        }
+        .team-details {
+            margin-top: 10px;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="static/icons8-shrug-emoticon-94.png" alt="Logo">
+            <h1>Sentiment Analysis</h1>
+        </div>
+        <form id="sentimentForm" action="/predict" method="post">
+            <div class="form-group">
+                <label for="textInput">Enter your text:</label>
+                <input type="text" class="form-control" id="textInput" name="text" required>
+            </div>
+            <div class="form-group">
+                <button type="submit">Predict Sentiment</button>
+            </div>
+        </form>
+        <div class="result" id="resultSection">
+            <p class="label">Sentiment:</p>
+            <p id="sentimentResult"></p>
+            <p class="label">Probabilities:</p>
+            <ul id="probabilitiesResult" class="list-unstyled"></ul>
+            <div class="row chart-container">
+                <div class="col-md-6">
+                    <canvas id="sentimentChart"></canvas>
+                </div>
+                <div class="col-md-6">
+                    <canvas id="sentimentPieChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="footer">
+        <p>&copy; 2024 ANSH 21. All rights reserved.</p>
+        <div class="team-details">
+            <p>Team: Ansh, [Ansih, Anurag , Harsh]</p>
+        </div>
+    </div>
+    <script>
+        let sentimentChart = null;
+        let sentimentPieChart = null;
+
+        document.getElementById('sentimentForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    body: formData
+                });
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const data = await response.json();
+                if (!data.probs) {
+                    throw new Error('Invalid data format received');
+                }
+                displayResult(data);
+            } catch (error) {
+                console.error('Error:', error);
+                displayError('Failed to predict sentiment.');
+            }
+        });
+
+        function displayResult(data) {
+            document.getElementById('sentimentResult').textContent = data.sentiment;
+            const probabilitiesList = document.getElementById('probabilitiesResult');
+            probabilitiesList.innerHTML = '';
+            const labels = ['Negative', 'Neutral', 'Positive'];
+            data.probs.forEach((prob, index) => {
+                const listItem = document.createElement('li');
+                listItem.textContent = `${labels[index]}: ${prob.toFixed(4)}`;
+                probabilitiesList.appendChild(listItem);
+            });
+            document.getElementById('resultSection').style.display = 'block';
+            updateChart(data.probs);
+            updatePieChart(data.probs);
+        }
+
+        function displayError(message) {
+            const errorElement = document.createElement('p');
+            errorElement.textContent = message;
+            errorElement.classList.add('error');
+            const resultSection = document.getElementById('resultSection');
+            resultSection.innerHTML = '';
+            resultSection.appendChild(errorElement);
+            resultSection.style.display = 'block';
+        }
+
+        function updateChart(probs) {
+            const ctx = document.getElementById('sentimentChart').getContext('2d');
+            if (sentimentChart) {
+                sentimentChart.destroy();
+            }
+            sentimentChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Negative', 'Neutral', 'Positive'],
+                    datasets: [{
+                        label: 'Sentiment Probabilities',
+                        data: probs,
+                        backgroundColor: ['rgba(255, 99, 132, 0.2)', 'rgba(54, 162, 235, 0.2)', 'rgba(75, 192, 192, 0.2)'],
+                        borderColor: ['rgba(255, 99, 132, 1)', 'rgba(54, 162, 235, 1)', 'rgba(75, 192, 192, 1)'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function updatePieChart(probs) {
+            const ctx = document.getElementById('sentimentPieChart').getContext('2d');
+            if (sentimentPieChart) {
+                sentimentPieChart.destroy();
+            }
+            sentimentPieChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: ['Negative', 'Neutral', 'Positive'],
+                    datasets: [{
+                        label: 'Sentiment Probabilities',
+                        data: probs,
+                        backgroundColor: ['rgba(255, 99, 132, 0.2)', 'rgba(54, 162, 235, 0.2)', 'rgba(75, 192, 192, 0.2)'],
+                        borderColor: ['rgba(255, 99, 132, 1)', 'rgba(54, 162, 235, 1)', 'rgba(75, 192, 192, 1)'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(tooltipItem) {
+                                    return `${tooltipItem.label}: ${tooltipItem.raw.toFixed(4)}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
