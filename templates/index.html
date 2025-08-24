@@ -1,287 +1,260 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Sentiment Analysis</title>
-    <link
-      rel="stylesheet"
-      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
-    />
-    <style>
-      body {
-        background: url("static/Background.webp") no-repeat center center fixed;
-        background-size: cover;
-        color: #fff;
-        font-family: "Arial", sans-serif;
-      }
-      .container {
-        max-width: 800px;
-        margin: 50px auto;
-        background-color: rgba(
-          37,
-          35,
-          35,
-          0.8
-        ); /* Semi-transparent background */
-        padding: 30px;
-        border-radius: 15px; /* Increased border radius */
-        box-shadow: 0 0 25px rgba(41, 39, 39, 0.5); /* Deeper shadow */
-      }
-      .header {
-        text-align: center;
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sentiment Analysis</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      background: url("static/Background.webp") no-repeat center center fixed;
+      background-size: cover;
+      font-family: 'Inter', sans-serif;
+      color: #fff;
+      position: relative;
+      margin: 0;
+    }
+
+    /* Dark overlay for readability */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background-color: rgba(0, 0, 0, 0.6);
+      z-index: -1;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 50px auto;
+      background-color: rgba(30, 30, 30, 0.85);
+      padding: 40px;
+      border-radius: 15px;
+      box-shadow: 0 0 30px rgba(0,0,0,0.5);
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .header img {
+      height: 70px;
+      animation: rotate 6s linear infinite;
+      margin-bottom: 15px;
+    }
+
+    @keyframes rotate {
+      100% { transform: rotate(360deg); }
+    }
+
+    .header h1 {
+      font-size: 2.7rem;
+      font-weight: 700;
+      background: linear-gradient(to right, #8e9eff, #b58dff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    label {
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+
+    textarea {
+      resize: none;
+      height: 100px;
+      font-size: 1rem;
+    }
+
+    .form-group button {
+      background: linear-gradient(to right, #6a97e3, #ba8deb);
+      border: none;
+      color: white;
+      font-size: 1.2rem;
+      padding: 12px;
+      border-radius: 8px;
+      width: 100%;
+      transition: background 0.3s ease;
+      font-weight: 600;
+    }
+
+    .form-group button:hover {
+      background: linear-gradient(to right, #5b85cb, #a67de6);
+    }
+
+    .result {
+      display: none;
+      margin-top: 30px;
+      animation: fadeIn 0.6s ease-in-out;
+    }
+
+    .label {
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .chart-container {
+      margin-top: 30px;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 50px;
+      font-size: 0.95rem;
+      padding: 20px 0;
+      color: #ccc;
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    canvas {
+      background-color: #222;
+      padding: 10px;
+      border-radius: 10px;
+    }
+
+    @media (max-width: 768px) {
+      .chart-container .col-md-6 {
         margin-bottom: 30px;
-        position: relative;
       }
-      .header img {
-        height: 80px; /* Slightly larger logo */
-        margin-bottom: 20px;
-        animation: rotate 5s infinite linear;
-      }
-      @keyframes rotate {
-        100% {
-          transform: rotate(360deg);
-        }
-      }
-      .header h1 {
-        margin: 0;
-        font-size: 2.5rem;
-        display: inline-block;
-        background: linear-gradient(to right, #ba8deb, #6a97e3);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        color: transparent;
-      }
-      .form-group button {
-        background-color: #6a97e3;
-        border: none;
-        color: #201e1e;
-        font-size: 1.25rem; /* Increased button text size */
-        padding: 12px; /* Increased button padding */
-        border-radius: 5px;
-        width: 100%;
-        transition: background-color 0.3s ease; /* Transition effect */
-      }
-      .form-group button:hover {
-        background-color: #5b85cb;
-      }
-      .result {
-        display: none;
-        margin-top: 20px;
-      }
-      .result .label {
-        font-weight: bold;
-        font-size: 1.1rem; /* Increased font size for labels */
-      }
-      .chart-container {
-        margin-top: 20px;
-      }
-      .error {
-        color: red;
-        font-weight: bold;
-      }
-      canvas {
-        max-width: 100%;
-        border-radius: 10px; /* Rounded corners for charts */
-      }
-      .footer {
-        margin-top: 50px;
-        text-align: center;
-        font-size: 0.9rem;
-        color: #fff;
-        padding: 20px 0; /* Increased padding */
-        border-top: 1px solid rgba(255, 255, 255, 0.3); /* Subtle top border */
-      }
-      .team-details {
-        margin-top: 10px;
-      }
-    </style>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  </head>
-  <body>
-    <div class="container">
-      <div class="header">
-        <img src="static/icons8-shrug-emoticon-94.png" alt="Logo" />
-        <h1>Sentiment Analysis</h1>
-      </div>
-      <form id="sentimentForm" action="/predict" method="post">
-        <div class="form-group">
-          <label for="textInput">Enter your text:</label>
-          <input
-            type="text"
-            class="form-control"
-            id="textInput"
-            name="text"
-            required
-          />
-        </div>
-        <div class="form-group">
-          <button type="submit">Predict Sentiment</button>
-        </div>
-      </form>
-      <div class="result" id="resultSection">
-        <p class="label">Sentiment:</p>
-        <p id="sentimentResult" style="font-size: 1.2rem"></p>
-        <p class="label">Probabilities:</p>
-        <ul id="probabilitiesResult" class="list-unstyled"></ul>
-        <div class="row chart-container">
-          <div class="col-md-6">
-            <canvas id="sentimentChart"></canvas>
-          </div>
-          <div class="col-md-6">
-            <canvas id="sentimentPieChart"></canvas>
-          </div>
-        </div>
-      </div>
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="static/icons8-shrug-emoticon-94.png" alt="Logo" />
+      <h1>Sentiment Analysis</h1>
     </div>
-    <div class="footer">
-      <p>&copy; 2024 Anish. All rights reserved.</p>
-      <div class="team-details">
-        <p>Team: Ansh, Anurag, Harsh</p>
-      </div>
-    </div>
-    <script>
-      let sentimentChart = null;
-      let sentimentPieChart = null;
 
-      document
-        .getElementById("sentimentForm")
-        .addEventListener("submit", async function (event) {
-          event.preventDefault();
-          const form = event.target;
-          const formData = new FormData(form);
-          try {
-            const response = await fetch("/predict", {
-              method: "POST",
-              body: formData,
-            });
-            if (!response.ok) {
-              throw new Error("Network response was not ok");
-            }
-            const data = await response.json();
-            if (!data.probs) {
-              throw new Error("Invalid data format received");
-            }
-            displayResult(data);
-          } catch (error) {
-            console.error("Error:", error);
-            displayError("Failed to predict sentiment.");
+    <form id="sentimentForm">
+      <div class="form-group">
+        <label for="textInput">Enter your text:</label>
+        <textarea class="form-control" id="textInput" name="text" required></textarea>
+      </div>
+      <div class="form-group">
+        <button type="submit">Analyze Sentiment</button>
+      </div>
+    </form>
+
+    <div class="result" id="resultSection">
+      <p class="label">Predicted Sentiment:</p>
+      <p id="sentimentResult" style="font-size: 1.3rem;"></p>
+
+      <p class="label">Probability Breakdown:</p>
+      <ul id="probabilitiesResult" class="list-unstyled"></ul>
+
+      <div class="row chart-container">
+        <div class="col-md-6">
+          <canvas id="sentimentChart"></canvas>
+        </div>
+        <div class="col-md-6">
+          <canvas id="sentimentPieChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <p>&copy; 2024 Anish. All rights reserved.</p>
+  </div>
+
+  <script>
+    let sentimentChart = null;
+    let sentimentPieChart = null;
+
+    document.getElementById("sentimentForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+      const text = document.getElementById("textInput").value.trim();
+      if (!text) return;
+
+      const formData = new FormData();
+      formData.append("text", text);
+
+      try {
+        const response = await fetch("/predict", {
+          method: "POST",
+          body: formData
+        });
+        const data = await response.json();
+        displayResult(data);
+      } catch (err) {
+        console.error("Error:", err);
+        displayError("Something went wrong. Try again.");
+      }
+    });
+
+    function displayResult(data) {
+      document.getElementById("sentimentResult").textContent = data.sentiment;
+      const probsList = document.getElementById("probabilitiesResult");
+      probsList.innerHTML = "";
+
+      const labels = ["Negative", "Neutral", "Positive"];
+      data.probs.forEach((prob, i) => {
+      const li = document.createElement("li");
+      const percent = (prob * 100).toFixed(2);
+      li.textContent = `${labels[i]}: ${percent}%`;
+      probsList.appendChild(li);
+  });
+
+      document.getElementById("resultSection").style.display = "block";
+      updateChart(data.probs);
+      updatePieChart(data.probs);
+    }
+
+    function displayError(msg) {
+      const section = document.getElementById("resultSection");
+      section.innerHTML = `<p class="text-danger">${msg}</p>`;
+      section.style.display = "block";
+    }
+
+    function updateChart(probs) {
+      const ctx = document.getElementById("sentimentChart").getContext("2d");
+      if (sentimentChart) sentimentChart.destroy();
+      sentimentChart = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: ["Negative", "Neutral", "Positive"],
+          datasets: [{
+            label: "Probabilities",
+            data: probs,
+            backgroundColor: ["#e74c3c", "#3498db", "#2ecc71"]
+          }]
+        },
+        options: {
+          scales: { y: { beginAtZero: true } },
+          responsive: true
+        }
+      });
+    }
+
+    function updatePieChart(probs) {
+      const ctx = document.getElementById("sentimentPieChart").getContext("2d");
+      if (sentimentPieChart) sentimentPieChart.destroy();
+      sentimentPieChart = new Chart(ctx, {
+        type: "pie",
+        data: {
+          labels: ["Negative", "Neutral", "Positive"],
+          datasets: [{
+            data: probs,
+            backgroundColor: ["#e74c3c", "#3498db", "#2ecc71"]
+          }]
+        },
+        options: {
+          plugins: {
+            legend: { position: "bottom" }
           }
-        });
-
-      function displayResult(data) {
-        document.getElementById("sentimentResult").textContent = data.sentiment;
-        const probabilitiesList = document.getElementById(
-          "probabilitiesResult"
-        );
-        probabilitiesList.innerHTML = "";
-        const labels = ["Negative", "Neutral", "Positive"];
-        data.probs.forEach((prob, index) => {
-          const listItem = document.createElement("li");
-          listItem.textContent = `${labels[index]}: ${prob.toFixed(4)}`;
-          probabilitiesList.appendChild(listItem);
-        });
-        document.getElementById("resultSection").style.display = "block";
-        updateChart(data.probs);
-        updatePieChart(data.probs);
-      }
-
-      function displayError(message) {
-        const errorElement = document.createElement("p");
-        errorElement.textContent = message;
-        errorElement.classList.add("error");
-        const resultSection = document.getElementById("resultSection");
-        resultSection.innerHTML = "";
-        resultSection.appendChild(errorElement);
-        resultSection.style.display = "block";
-      }
-
-      function updateChart(probs) {
-        const ctx = document.getElementById("sentimentChart").getContext("2d");
-        if (sentimentChart) {
-          sentimentChart.destroy();
         }
-        sentimentChart = new Chart(ctx, {
-          type: "bar",
-          data: {
-            labels: ["Negative", "Neutral", "Positive"],
-            datasets: [
-              {
-                label: "Sentiment Probabilities",
-                data: probs,
-                backgroundColor: [
-                  "rgba(255, 99, 132, 0.6)",
-                  "rgba(54, 162, 235, 0.6)",
-                  "rgba(75, 192, 192, 0.6)",
-                ],
-                borderColor: [
-                  "rgba(255, 99, 132, 1)",
-                  "rgba(54, 162, 235, 1)",
-                  "rgba(75, 192, 192, 1)",
-                ],
-                borderWidth: 1,
-              },
-            ],
-          },
-          options: {
-            scales: {
-              y: {
-                beginAtZero: true,
-              },
-            },
-          },
-        });
-      }
-
-      function updatePieChart(probs) {
-        const ctx = document
-          .getElementById("sentimentPieChart")
-          .getContext("2d");
-        if (sentimentPieChart) {
-          sentimentPieChart.destroy();
-        }
-        sentimentPieChart = new Chart(ctx, {
-          type: "pie",
-          data: {
-            labels: ["Negative", "Neutral", "Positive"],
-            datasets: [
-              {
-                label: "Sentiment Probabilities",
-                data: probs,
-                backgroundColor: [
-                  "rgba(255, 99, 132, 0.6)",
-                  "rgba(54, 162, 235, 0.6)",
-                  "rgba(75, 192, 192, 0.6)",
-                ],
-                borderColor: [
-                  "rgba(255, 99, 132, 1)",
-                  "rgba(54, 162, 235, 1)",
-                  "rgba(75, 192, 192, 1)",
-                ],
-                borderWidth: 1,
-              },
-            ],
-          },
-          options: {
-            responsive: true,
-            plugins: {
-              legend: {
-                position: "top",
-              },
-              tooltip: {
-                callbacks: {
-                  label: function (tooltipItem) {
-                    return `${tooltipItem.label}: ${tooltipItem.raw.toFixed(
-                      4
-                    )}`;
-                  },
-                },
-              },
-            },
-          },
-        });
-      }
-    </script>
-  </body>
+      });
+    }
+  </script>
+</body>
 </html>
