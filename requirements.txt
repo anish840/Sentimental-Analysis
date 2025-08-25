@@ -2,3 +2,4 @@ Flask
 torch
 transformers
 numpy
+gunicorn
